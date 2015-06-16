@@ -3,27 +3,28 @@ Imports System.Xml
 Imports System.Net
 
 Public Class UPS
-    Private accessKey As String = ""
-    Private userName As String = ""
-    Private passWord As String = ""
+    Private accessKey As String = "XXXXXXXXXXXXXXXX"
+    Private userName As String = "username"
+    Private passWord As String = "password"
     Private path As String = "https://www.ups.com/ups.app/xml/Track"
+    Public xml As XmlDocument = New XmlDocument()
+
+    'constructor
+    Sub New(trackNo As String)
+        xml = getUPSXMLbyTrackingNumber(trackNo)
+    End Sub
 
     'public functions
-
     'getIdentificationNumber might not be necessary
-    Public Shared Function getIdentificationNumber(trackNo As String) As String
-        Dim ups As New UPS
-        Dim xml As XmlDocument = ups.getUPSXMLbyTrackingNumber(trackNo)
-        Dim idNo As String = ups.getNodeValue(xml, "TrackResponse/Shipment/ShipmentIdentificationNumber")
+    Public Function getIdentificationNumber() As String
+        Dim idNo As String = getNodeValue(xml, "TrackResponse/Shipment/ShipmentIdentificationNumber")
 
         Return idNo.Trim
     End Function
 
-    Public Shared Function getPieceCount(trackNo As String) As Integer
-        Dim ups As New UPS
-        Dim idNo As String = getIdentificationNumber(trackNo)
-        Dim xml As XmlDocument = ups.getUPSXMLbyShipmentIdentificationNumber(idNo)
-        Dim numString As String = ups.getNodeCount(xml, "TrackResponse/Shipment/Package")
+    Public Function getPieceCount() As Integer
+        'Dim idNo As String = getIdentificationNumber()
+        Dim numString As String = getNodeCount(xml, "TrackResponse/Shipment/Package")
 
         If numString = "" Then
             numString = "0"
@@ -32,11 +33,9 @@ Public Class UPS
         Return CInt(numString.Trim)
     End Function
 
-    Public Shared Function getShipmentWeight(trackNo As String) As Double
-        Dim ups As New UPS
-        Dim idNo As String = getIdentificationNumber(trackNo)
-        Dim xml As XmlDocument = ups.getUPSXMLbyShipmentIdentificationNumber(idNo)
-        Dim numString As String = ups.getNodeValue(xml, "TrackResponse/Shipment/ShipmentWeight/Weight")
+    Public Function getShipmentWeight() As Double
+        'Dim idNo As String = getIdentificationNumber()
+        Dim numString As String = getNodeValue(xml, "TrackResponse/Shipment/ShipmentWeight/Weight")
 
         If numString = "" Then
             numString = "0"
@@ -45,10 +44,8 @@ Public Class UPS
         Return CDbl(numString.Trim)
     End Function
 
-    Public Shared Function getPieceWeight(trackNo As String) As Double
-        Dim ups As New UPS
-        Dim xml As XmlDocument = ups.getUPSXMLbyTrackingNumber(trackNo)
-        Dim numString As String = ups.getNodeValue(xml, "TrackResponse/Shipment/Package/PackageWeight/Weight")
+    Public Function getPieceWeight() As Double
+        Dim numString As String = getNodeValue(xml, "TrackResponse/Shipment/Package/PackageWeight/Weight")
 
         If numString = "" Then
             numString = "0"
@@ -57,20 +54,64 @@ Public Class UPS
         Return CDbl(numString.Trim)
     End Function
 
-    Public Shared Function getUPSShipperNumber(trackNo As String) As String
-        Dim ups As New UPS
-        Dim xml As XmlDocument = ups.getUPSXMLbyTrackingNumber(trackNo)
-        Dim cnum As String = ups.getNodeValue(xml, "TrackResponse/Shipment/Shipper/ShipperNumber")
+    Public Function getUpsShipperNumber() As String
+        Dim cnum As String = getNodeValue(xml, "TrackResponse/Shipment/Shipper/ShipperNumber")
 
         Return cnum.Trim
     End Function
 
-    Public Shared Function getShipperAddressElement(trackNo As String, element As String) As String
-        Dim ups As New UPS
-        Dim xml As XmlDocument = ups.getUPSXMLbyTrackingNumber(trackNo)
-        Dim strOut As String = ups.getNodeValue(xml, "TrackResponse/Shipment/Shipper/Address/" & element)
+    Public Function getShipperAddressElement(element As String) As String
+        Dim strOut As String = getNodeValue(xml, "TrackResponse/Shipment/Shipper/Address/" & element)
 
         Return strOut.Trim
+    End Function
+
+    Public Function getAllTrackingNumbersInShipment() As String
+        Dim txtOut As String = ""
+        'Dim idNo As String = getIdentificationNumber(trackNo)
+        'Dim idNo As String = trackNo
+        'Dim xml As XmlDocument = ups.getUPSXMLbyShipmentIdentificationNumber(idNo)
+        Dim nodeList As XmlNodeList = getNodeList(xml, "TrackResponse/Shipment/Package")
+
+        For Each n In nodeList
+            'Dim namespaces As XmlNamespaceManager = New XmlNamespaceManager(xml.NameTable)
+            Dim node As XmlNode = n.SelectSingleNode("TrackingNumber")
+            txtOut &= node.InnerText & " "
+        Next
+
+        Return txtOut.Trim
+    End Function
+
+    Public Function getXmlString(trackNo As String) As String
+        Dim xml_req As String = "<?xml version='1.0'?>" & _
+              "<AccessRequest xml:lang='en-US'>" & _
+               "<AccessLicenseNumber>" & "BCCACE55F747BBA5" & "</AccessLicenseNumber>" & _
+               "<UserId>" & "trehoffman" & "</UserId>" & _
+               "<Password>" & "UPSDevelop!1" & "</Password>" & _
+              "</AccessRequest>" & _
+              "<?xml version='1.0'?>" & _
+              "<TrackRequest xml:lang='en-US'>" & _
+               "<Request>" & _
+                "<TransactionReference>" & _
+                 "<CustomerContext>QAST Track</CustomerContext>" & _
+                 "<XpciVersion>1.0</XpciVersion>" & _
+                "</TransactionReference>" & _
+                "<RequestAction>Track</RequestAction>" & _
+                "<RequestOption>activity</RequestOption>" & _
+               "</Request>" & _
+               "<ShipmentIdentificationNumber>" & trackNo & "</ShipmentIdentificationNumber>" & _
+              "</TrackRequest>"
+
+        Dim client As New WebClient()
+        client.Headers.Add("Content-Type", "application/xml")
+        Dim sentByte As Byte() = System.Text.Encoding.ASCII.GetBytes(xml_req)
+        Dim responseByte As Byte() = client.UploadData("https://www.ups.com/ups.app/xml/Track", "POST", sentByte)
+
+        Dim responseString As String = System.Text.Encoding.ASCII.GetString(responseByte)
+        'Dim responseXML As New XmlDocument()
+        'responseXML.LoadXml(responseString)
+
+        Return responseString
     End Function
 
     'private "helper" functions
@@ -152,5 +193,12 @@ Public Class UPS
     Private Function getNodeCount(xml As XmlDocument, nodePath As String) As Integer
         Dim nodeList = xml.SelectNodes(nodePath)
         Return nodeList.Count
+    End Function
+
+    Private Function getNodeList(xml As XmlDocument, nodePath As String) As XmlNodeList
+        'Dim namespaces As XmlNamespaceManager = New XmlNamespaceManager(xml.NameTable)
+        Dim nodeList As XmlNodeList = xml.SelectNodes(nodePath)
+
+        Return nodeList
     End Function
 End Class

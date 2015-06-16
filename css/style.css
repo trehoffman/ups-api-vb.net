@@ -1,0 +1,33 @@
+﻿body
+{
+    min-height: 350px;
+    height: 100vh;
+    background: #ffffff url(/img/ups-logo.png) no-repeat center center;
+}
+
+form {
+    background: rgba(255,255,255,.75);
+    height:100%;
+}
+
+.container
+{
+    display:none;
+    text-align:center;
+    margin-top:25px;
+    /*width:50%;
+    min-width:600px;*/
+}
+.container.MessageArea
+{
+    /*border:1px solid red;*/
+}
+.container.ShowResults
+{
+    display:none;
+}
+.container.Info
+{
+    display:inherit;
+    /*border:1px solid black;*/
+}
