@@ -83,23 +83,23 @@ Public Class UPS
     End Function
 
     Public Function getXmlString(trackNo As String) As String
-        Dim xml_req As String = "<?xml version='1.0'?>" & _
-              "<AccessRequest xml:lang='en-US'>" & _
-               "<AccessLicenseNumber>" & "BCCACE55F747BBA5" & "</AccessLicenseNumber>" & _
-               "<UserId>" & "trehoffman" & "</UserId>" & _
-               "<Password>" & "UPSDevelop!1" & "</Password>" & _
-              "</AccessRequest>" & _
-              "<?xml version='1.0'?>" & _
-              "<TrackRequest xml:lang='en-US'>" & _
-               "<Request>" & _
-                "<TransactionReference>" & _
-                 "<CustomerContext>QAST Track</CustomerContext>" & _
-                 "<XpciVersion>1.0</XpciVersion>" & _
-                "</TransactionReference>" & _
-                "<RequestAction>Track</RequestAction>" & _
-                "<RequestOption>activity</RequestOption>" & _
-               "</Request>" & _
-               "<ShipmentIdentificationNumber>" & trackNo & "</ShipmentIdentificationNumber>" & _
+        Dim xml_req As String = "<?xml version='1.0'?>" &
+              "<AccessRequest xml:lang='en-US'>" &
+               "<AccessLicenseNumber>" & accessKey & "</AccessLicenseNumber>" &
+               "<UserId>" & userName & "</UserId>" &
+               "<Password>" & passWord & "</Password>" &
+              "</AccessRequest>" &
+              "<?xml version='1.0'?>" &
+              "<TrackRequest xml:lang='en-US'>" &
+               "<Request>" &
+                "<TransactionReference>" &
+                 "<CustomerContext>QAST Track</CustomerContext>" &
+                 "<XpciVersion>1.0</XpciVersion>" &
+                "</TransactionReference>" &
+                "<RequestAction>Track</RequestAction>" &
+                "<RequestOption>activity</RequestOption>" &
+               "</Request>" &
+               "<ShipmentIdentificationNumber>" & trackNo & "</ShipmentIdentificationNumber>" &
               "</TrackRequest>"
 
         Dim client As New WebClient()
